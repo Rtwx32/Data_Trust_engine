@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataTrust Engine — لوحة التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --surface: #0b1520;
+    --surface2: #0f1e2e;
+    --border: #1a3a5c;
+    --accent-blue: #00aaff;
+    --accent-cyan: #00e5cc;
+    --accent-green: #00ff88;
+    --accent-yellow: #ffd100;
+    --accent-red: #ff3d3d;
+    --text: #c8e0f4;
+    --text-dim: #4a7a9b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Cairo', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,170,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,170,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scan line effect */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-blue), var(--accent-cyan), transparent);
+    animation: scan 4s linear infinite;
+    z-index: 100;
+    pointer-events: none;
+  }
+  @keyframes scan {
+    0% { top: 0; opacity: 1; }
+    95% { opacity: 0.5; }
+    100% { top: 100vh; opacity: 0; }
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 36px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo-icon {
+    width: 52px; height: 52px;
+    border: 2px solid var(--accent-blue);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: var(--accent-blue);
+    position: relative;
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,170,255,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(0,170,255,0); }
+  }
+  .logo-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+  }
+  .logo-text span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-cyan);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 10px var(--accent-green);
+    animation: blink 1.5s ease-in-out infinite;
+    display: inline-block;
+    margin-left: 6px;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Stats row */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+    cursor: default;
+  }
+  .stat-card:hover { border-color: var(--accent-blue); }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card.total::after { background: var(--accent-blue); }
+  .stat-card.trusted::after { background: var(--accent-green); }
+  .stat-card.review::after { background: var(--accent-yellow); }
+  .stat-card.rejected::after { background: var(--accent-red); }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .stat-value {
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-card.total .stat-value { color: var(--accent-blue); }
+  .stat-card.trusted .stat-value { color: var(--accent-green); }
+  .stat-card.review .stat-value { color: var(--accent-yellow); }
+  .stat-card.rejected .stat-value { color: var(--accent-red); }
+  .stat-pct {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* Progress bar */
+  .trust-bar-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+  .trust-bar-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+  .trust-bar {
+    height: 20px;
+    border-radius: 2px;
+    background: #0a1520;
+    display: flex;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .trust-bar-seg {
+    height: 100%;
+    transition: width 1s ease;
+    position: relative;
+  }
+  .trust-bar-seg.trusted { background: linear-gradient(90deg, #00c97a, var(--accent-green)); }
+  .trust-bar-seg.review { background: linear-gradient(90deg, #d4a800, var(--accent-yellow)); }
+  .trust-bar-seg.rejected { background: linear-gradient(90deg, #c42828, var(--accent-red)); }
+  .bar-legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 1px; }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  /* Records panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent-cyan);
+    text-transform: uppercase;
+  }
+  .panel-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    background: rgba(0,170,255,0.1);
+    border: 1px solid rgba(0,170,255,0.3);
+    color: var(--accent-blue);
+  }
+
+  /* Record items */
+  .records-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .record-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .record-card::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0; right: 0;
+    width: 3px;
+  }
+  .record-card.trusted::before { background: var(--accent-green); }
+  .record-card.review::before { background: var(--accent-yellow); }
+  .record-card.rejected::before { background: var(--accent-red); }
+  .record-card:hover {
+    border-color: var(--accent-blue);
+    transform: translateX(-3px);
+  }
+  .record-card.active {
+    border-color: var(--accent-blue);
+    background: rgba(0,170,255,0.05);
+  }
+  .record-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .record-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .record-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 2px;
+  }
+  .trusted .record-status {
+    color: var(--accent-green);
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.2);
+  }
+  .review .record-status {
+    color: var(--accent-yellow);
+    background: rgba(255,209,0,0.08);
+    border: 1px solid rgba(255,209,0,0.2);
+  }
+  .rejected .record-status {
+    color: var(--accent-red);
+    background: rgba(255,61,61,0.08);
+    border: 1px solid rgba(255,61,61,0.2);
+  }
+  .record-meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .meta-chip {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .meta-chip span {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  .trust-meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .trust-meter-bar {
+    flex: 1;
+    height: 4px;
+    background: #1a3a5c;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .trust-meter-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+  .trusted .trust-meter-fill { background: var(--accent-green); }
+  .review .trust-meter-fill { background: var(--accent-yellow); }
+  .rejected .trust-meter-fill { background: var(--accent-red); }
+  .trust-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 45px;
+    text-align: left;
+  }
+  .trusted .trust-value { color: var(--accent-green); }
+  .review .trust-value { color: var(--accent-yellow); }
+  .rejected .trust-value { color: var(--accent-red); }
+
+  /* Detail panel */
+  .detail-panel { padding: 20px; }
+  .detail-empty {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 12px;
+    gap: 12px;
+  }
+  .detail-empty-icon { font-size: 36px; opacity: 0.3; }
+
+  .detail-record-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .detail-score-display {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: var(--surface2);
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .score-circle {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    border: 3px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .score-circle-val {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .score-meta { flex: 1; }
+  .score-meta h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .score-meta p { font-size: 12px; color: var(--text-dim); }
+
+  .issues-section { margin-bottom: 16px; }
+  .issues-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .issue-item {
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-right: 3px solid var(--accent-red);
+    border-radius: 2px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .suggestion-item {
+    padding: 10px 14px;
+    background: rgba(0,229,204,0.05);
+    border-right: 3px solid var(--accent-cyan);
+    border-radius: 2px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  /* Root cause panel */
+  .root-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+  .recommendations-grid {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rec-item {
+    padding: 14px 18px;
+    border-radius: 3px;
+    font-size: 14px;
+    line-height: 1.6;
+    border: 1px solid;
+    position: relative;
+    padding-right: 46px;
+  }
+  .rec-item.red {
+    background: rgba(255,61,61,0.05);
+    border-color: rgba(255,61,61,0.2);
+    color: #ffaaaa;
+  }
+  .rec-item.yellow {
+    background: rgba(255,209,0,0.05);
+    border-color: rgba(255,209,0,0.2);
+    color: #ffe87a;
+  }
+  .rec-item.blue {
+    background: rgba(0,170,255,0.05);
+    border-color: rgba(0,170,255,0.2);
+    color: #88ccff;
+  }
+  .rec-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+  }
+
+  /* Layer pipeline */
+  .pipeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 24px;
+    padding: 24px;
+  }
+  .pipeline-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent-cyan);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .pipeline-track {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .layer-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .layer-circle {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: var(--surface2);
+    position: relative;
+    transition: all 0.3s;
+  }
+  .layer-circle.active {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 16px rgba(0,229,204,0.3);
+  }
+  .layer-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-align: center;
+    color: var(--text-dim);
+    max-width: 70px;
+    line-height: 1.3;
+    letter-spacing: 0.5px;
+  }
+  .layer-label.active { color: var(--accent-cyan); }
+  .pipeline-connector {
+    flex: 1;
+    min-width: 30px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--border), var(--accent-cyan), var(--border));
+    margin-bottom: 28px;
+  }
+
+  /* Active learning log */
+  .al-log {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .al-entry {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-size: 13px;
+  }
+  .al-entry:last-child { border-bottom: none; }
+  .al-indicator {
+    width: 28px; height: 28px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .al-indicator.saved { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); }
+  .al-content { flex: 1; }
+  .al-pattern {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-blue);
+    margin-bottom: 4px;
+  }
+  .al-reason { color: var(--text-dim); line-height: 1.5; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+  .scroll-area { max-height: 520px; overflow-y: auto; }
+  .scroll-area::-webkit-scrollbar { width: 4px; }
+  .scroll-area::-webkit-scrollbar-track { background: transparent; }
+  .scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛡</div>
+      <div class="logo-text">
+        <h1>DataTrust Engine</h1>
+        <span>محرك موثوقية البيانات — v2.0</span>
+      </div>
+    </div>
+    <div class="header-meta">
+      <span><span class="status-dot"></span>النظام يعمل</span>
+      <span id="current-time" style="color:var(--accent-blue)"></span>
+      <span>6 طبقات حماية</span>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-label">إجمالي السجلات</div>
+      <div class="stat-value" id="stat-total">0</div>
+      <div class="stat-pct">سجل محلل</div>
+    </div>
+    <div class="stat-card trusted">
+      <div class="stat-label">موثوقة</div>
+      <div class="stat-value" id="stat-trusted">0</div>
+      <div class="stat-pct" id="pct-trusted">—</div>
+    </div>
+    <div class="stat-card review">
+      <div class="stat-label">تحتاج مراجعة</div>
+      <div class="stat-value" id="stat-review">0</div>
+      <div class="stat-pct" id="pct-review">—</div>
+    </div>
+    <div class="stat-card rejected">
+      <div class="stat-label">مرفوضة</div>
+      <div class="stat-value" id="stat-rejected">0</div>
+      <div class="stat-pct" id="pct-rejected">—</div>
+    </div>
+  </div>
+
+  <!-- Trust bar -->
+  <div class="trust-bar-wrapper">
+    <div class="trust-bar-label">توزيع مستوى الثقة</div>
+    <div class="trust-bar" id="trust-bar">
+      <div class="trust-bar-seg trusted" id="bar-trusted" style="width:0%"></div>
+      <div class="trust-bar-seg review" id="bar-review" style="width:0%"></div>
+      <div class="trust-bar-seg rejected" id="bar-rejected" style="width:0%"></div>
+    </div>
+    <div class="bar-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-green)"></div>موثوق</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-yellow)"></div>مراجعة</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-red)"></div>مرفوض</div>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline">
+    <div class="pipeline-title">مسار معالجة البيانات — 6 طبقات</div>
+    <div class="pipeline-track">
+      <div class="layer-node">
+        <div class="layer-circle active">🔴</div>
+        <div class="layer-label active">Layer 1<br>كشف إحصائي</div>
+      </div>
+      <div class="pipeline-connector"></div>
+      <div class="layer-node">
+        <div class="layer-circle active">🟡</div>
+        <div class="layer-label active">Layer 2<br>استرداد بيانات</div>
+      </div>
+      <div class="pipeline-connector"></div>
+      <div class="layer-node">
+        <div class="layer-circle active">🟢</div>
+        <div class="layer-label active">Layer 3<br>حارس دلالي</div>
+      </div>
+      <div class="pipeline-connector"></div>
+      <div class="layer-node">
+        <div class="layer-circle active">🔵</div>
+        <div class="layer-label active">Layer 4<br>شرح وتفسير</div>
+      </div>
+      <div class="pipeline-connector"></div>
+      <div class="layer-node">
+        <div class="layer-circle active">🟣</div>
+        <div class="layer-label active">Layer 5<br>تعلم نشط</div>
+      </div>
+      <div class="pipeline-connector"></div>
+      <div class="layer-node">
+        <div class="layer-circle active">⚪</div>
+        <div class="layer-label active">Layer 6<br>الأسباب الجذرية</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Records + Detail -->
+  <div class="main-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">سجلات البيانات المحللة</span>
+        <span class="panel-badge" id="records-count">0 سجل</span>
+      </div>
+      <div class="scroll-area">
+        <div class="records-list" id="records-list"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">تفاصيل السجل</span>
+        <span class="panel-badge">تحليل معمق</span>
+      </div>
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-empty">
+          <div class="detail-empty-icon">🔍</div>
+          <span>اختر سجلاً للتحليل</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Root Cause -->
+  <div class="root-panel">
+    <div class="panel-header">
+      <span class="panel-title">تحليل الأسباب الجذرية</span>
+      <span class="panel-badge" id="error-rate-badge">—</span>
+    </div>
+    <div class="recommendations-grid" id="recommendations"></div>
+  </div>
+
+  <!-- Active Learning -->
+  <div class="al-log">
+    <div class="panel-header">
+      <span class="panel-title">ذاكرة التعلم النشط</span>
+      <span class="panel-badge">استثناءات محفوظة</span>
+    </div>
+    <div id="al-entries"></div>
+  </div>
+
+  <footer>DataTrust Engine · نظام متعدد الطبقات لضمان جودة البيانات · ©2025</footer>
+</div>
+
+<script>
+  // ======= Sample Data (matching the project's test data) =======
+  const RECORDS = [
+    {
+      id: 0,
+      مهنة: 'طيار', مؤهل: 'ثانوية عامة', عمر: 25, دخل: 85000, منطقة: 'الرياض',
+      trust_score: 35,
+      status: 'rejected',
+      status_label: '🚨 مرفوض',
+      layer1_anomaly: true,
+      issues: ['⚠️ السجل يحتوي على قيم غير اعتيادية إحصائياً', '❌ مهنة الطيار تتطلب بكالوريوس طيران كحد أدنى'],
+      suggestions: ['✏️ راجع المؤهل أو المهنة — الطيار يتطلب بكالوريوس طيران'],
+    },
+    {
+      id: 1,
+      مهنة: 'مبرمج', مؤهل: 'دراسات إسلامية', عمر: 28, دخل: 12000, منطقة: 'جدة',
+      trust_score: 85,
+      status: 'trusted',
+      status_label: '✅ موثوق',
+      layer1_anomaly: false,
+      issues: ['✅ استثناء محفوظ: في السوق السعودي، المبرمجون كثيراً ما يكونون من خريجي تخصصات أخرى'],
+      suggestions: [],
+    },
+    {
+      id: 2,
+      مهنة: 'طبيب', مؤهل: 'ثانوية عامة', عمر: 22, دخل: 5000, منطقة: 'الرياض',
+      trust_score: 25,
+      status: 'rejected',
+      status_label: '🚨 مرفوض',
+      layer1_anomaly: true,
+      issues: ['⚠️ السجل يحتوي على قيم غير اعتيادية إحصائياً', '❌ مهنة الطبيب تتطلب بكالوريوس طب 6 سنوات، مستحيل بعمر 22 مع ثانوية'],
+      suggestions: ['✏️ تحقق من عمر المستجيب أو مؤهله الدراسي'],
+    },
+    {
+      id: 3,
+      مهنة: 'معلم', مؤهل: 'بكالوريوس تربية', عمر: 35, دخل: 8000, منطقة: 'الدمام',
+      trust_score: 90,
+      status: 'trusted',
+      status_label: '✅ موثوق',
+      layer1_anomaly: false,
+      issues: [],
+      suggestions: [],
+    },
+    {
+      id: 4,
+      مهنة: 'محاسب', مؤهل: 'غير محدد', عمر: 40, دخل: 15000, منطقة: 'جدة',
+      trust_score: 60,
+      status: 'review',
+      status_label: '⚠️ يحتاج مراجعة',
+      layer1_anomaly: false,
+      issues: ['📝 تم استرداد 1 حقل ناقص تلقائياً (المؤهل)'],
+      suggestions: ['✏️ تحقق من المؤهل الدراسي للمحاسب'],
+    },
+  ];
+
+  const ROOT_CAUSE = {
+    total_errors: 2,
+    error_rate: '40%',
+    recommendations: [
+      { icon: '🔴', type: 'red', text: '40% من الأخطاء تناقضات منطقية — راجع صياغة أسئلة المهنة والمؤهل' },
+      { icon: '🟡', type: 'yellow', text: '20% قيم شاذة إحصائياً — تحقق من نطاق إجابات سؤال الدخل' },
+      { icon: '📍', type: 'blue', text: 'منطقة الرياض تحتوي على أعلى نسبة أخطاء — راجع تدريب الباحثين فيها' },
+    ]
+  };
+
+  const AL_MEMORY = [
+    {
+      pattern: 'مهنة=مبرمج، مؤهل=دراسات إسلامية',
+      verdict: 'مقبول',
+      reason: 'في السوق السعودي، المبرمجون كثيراً ما يكونون من خريجي تخصصات أخرى'
+    }
+  ];
+
+  // ======= Render =======
+  function getStatusClass(status) {
+    if (status === 'trusted') return 'trusted';
+    if (status === 'review') return 'review';
+    return 'rejected';
+  }
+
+  function init() {
+    // Time
+    setInterval(() => {
+      document.getElementById('current-time').textContent = new Date().toLocaleTimeString('ar-SA');
+    }, 1000);
+
+    const total = RECORDS.length;
+    const trusted = RECORDS.filter(r => r.status === 'trusted').length;
+    const review = RECORDS.filter(r => r.status === 'review').length;
+    const rejected = RECORDS.filter(r => r.status === 'rejected').length;
+
+    // Stats
+    animateCount('stat-total', total);
+    animateCount('stat-trusted', trusted);
+    animateCount('stat-review', review);
+    animateCount('stat-rejected', rejected);
+    document.getElementById('pct-trusted').textContent = Math.round(trusted/total*100) + '%';
+    document.getElementById('pct-review').textContent = Math.round(review/total*100) + '%';
+    document.getElementById('pct-rejected').textContent = Math.round(rejected/total*100) + '%';
+    document.getElementById('records-count').textContent = total + ' سجل';
+
+    // Bar
+    setTimeout(() => {
+      document.getElementById('bar-trusted').style.width = Math.round(trusted/total*100) + '%';
+      document.getElementById('bar-review').style.width = Math.round(review/total*100) + '%';
+      document.getElementById('bar-rejected').style.width = Math.round(rejected/total*100) + '%';
+    }, 300);
+
+    // Records
+    const list = document.getElementById('records-list');
+    RECORDS.forEach((rec, idx) => {
+      const cls = getStatusClass(rec.status);
+      const card = document.createElement('div');
+      card.className = `record-card ${cls} fade-in`;
+      card.style.animationDelay = `${idx * 0.1}s`;
+      card.innerHTML = `
+        <div class="record-top">
+          <span class="record-id">REC_${String(rec.id).padStart(3,'0')} · ${rec.منطقة}</span>
+          <span class="record-status">${rec.status_label}</span>
+        </div>
+        <div class="record-meta">
+          <span class="meta-chip">${rec.مهنة} <span>مهنة</span></span>
+          <span class="meta-chip">${rec.مؤهل} <span>مؤهل</span></span>
+          <span class="meta-chip">${rec.عمر} <span>سنة</span></span>
+        </div>
+        <div class="trust-meter">
+          <div class="trust-meter-bar">
+            <div class="trust-meter-fill" style="width:${rec.trust_score}%"></div>
+          </div>
+          <span class="trust-value">${rec.trust_score}/100</span>
+        </div>
+      `;
+      card.onclick = () => showDetail(rec, card);
+      list.appendChild(card);
+    });
+
+    // Root cause
+    document.getElementById('error-rate-badge').textContent = `نسبة الخطأ: ${ROOT_CAUSE.error_rate}`;
+    const recEl = document.getElementById('recommendations');
+    ROOT_CAUSE.recommendations.forEach(r => {
+      const el = document.createElement('div');
+      el.className = `rec-item ${r.type} fade-in`;
+      el.innerHTML = `<span class="rec-icon">${r.icon}</span>${r.text}`;
+      recEl.appendChild(el);
+    });
+
+    // Active Learning
+    const alEl = document.getElementById('al-entries');
+    AL_MEMORY.forEach(entry => {
+      const el = document.createElement('div');
+      el.className = 'al-entry';
+      el.innerHTML = `
+        <div class="al-indicator saved">✅</div>
+        <div class="al-content">
+          <div class="al-pattern">${entry.pattern} → ${entry.verdict}</div>
+          <div class="al-reason">${entry.reason}</div>
+        </div>
+      `;
+      alEl.appendChild(el);
+    });
+  }
+
+  function showDetail(rec, cardEl) {
+    document.querySelectorAll('.record-card').forEach(c => c.classList.remove('active'));
+    cardEl.classList.add('active');
+
+    const cls = getStatusClass(rec.status);
+    const colors = { trusted: 'var(--accent-green)', review: 'var(--accent-yellow)', rejected: 'var(--accent-red)' };
+    const color = colors[cls];
+
+    const panel = document.getElementById('detail-panel');
+    panel.innerHTML = `
+      <div class="fade-in">
+        <div class="detail-record-id">REC_${String(rec.id).padStart(3,'0')} · تحليل معمق</div>
+        <div class="detail-score-display">
+          <div class="score-circle" style="border-color:${color}">
+            <span class="score-circle-val" style="color:${color}">${rec.trust_score}</span>
+          </div>
+          <div class="score-meta">
+            <h3 style="color:${color}">${rec.status_label}</h3>
+            <p>درجة الثقة: ${rec.trust_score} من 100</p>
+            <p style="margin-top:6px; font-family:var(--mono); font-size:11px; color:var(--text-dim)">${rec.مهنة} · ${rec.مؤهل} · ${rec.عمر} سنة · ${rec.منطقة}</p>
+          </div>
+        </div>
+
+        ${rec.issues.length ? `
+        <div class="issues-section">
+          <div class="issues-title">المشكلات المكتشفة</div>
+          ${rec.issues.map(i => `<div class="issue-item">${i}</div>`).join('')}
+        </div>` : `
+        <div class="issues-section">
+          <div class="issues-title">المشكلات المكتشفة</div>
+          <div class="issue-item" style="border-right-color:var(--accent-green);color:var(--accent-green)">✅ لم يتم اكتشاف أي مشكلات</div>
+        </div>`}
+
+        ${rec.suggestions.length ? `
+        <div class="issues-section">
+          <div class="issues-title">التوصيات</div>
+          ${rec.suggestions.map(s => `<div class="suggestion-item">${s}</div>`).join('')}
+        </div>` : ''}
+
+        <div class="issues-section">
+          <div class="issues-title">بيانات السجل</div>
+          ${[['المهنة', rec.مهنة], ['المؤهل', rec.مؤهل], ['العمر', rec.عمر + ' سنة'], ['الدخل', rec.دخل.toLocaleString('ar-SA') + ' ريال'], ['المنطقة', rec.منطقة]]
+            .map(([k,v]) => `<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);margin-bottom:4px;border-radius:2px;font-size:13px;border:1px solid var(--border)">
+              <span style="color:var(--text-dim)">${k}</span>
+              <span style="font-family:var(--mono);color:#fff">${v}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function animateCount(id, target) {
+    let start = 0;
+    const el = document.getElementById(id);
+    const step = Math.ceil(target / 20);
+    const timer = setInterval(() => {
+      start = Math.min(start + step, target);
+      el.textContent = start;
+      if (start >= target) clearInterval(timer);
+    }, 40);
+  }
+
+  init();
+</script>
+</body>
+</html>
